@@ -13,14 +13,12 @@ const createTrip = async (req, res) => {
   try {
     const { name, start_date, end_date, participants } = req.body;
 
-    console.log("Request Body:", req.body); // 打印请求内容，方便调试
+    console.log("Request Body:", req.body);
 
-    // 验证必填字段
     if (!name || !start_date || !end_date) {
       return res.status(400).json({ error: "All fields are required." });
     }
 
-    // 如果有 participants，则验证格式；允许为空数组
     let validParticipants = [];
     if (participants && participants.length > 0) {
       validParticipants = participants.filter((id) =>
@@ -28,19 +26,18 @@ const createTrip = async (req, res) => {
       );
     }
 
-    // 创建 Trip
     const newTrip = await Trip.create({
-      user_id: req.user._id, // 从 authMiddleware 设置的 req.user 获取
+      user_id: req.user._id,
       name,
       start_date,
       end_date,
-      participants: validParticipants, // 如果为空，则存储为空数组
+      participants: validParticipants,
     });
 
-    console.log("Trip successfully created:", newTrip); // 打印成功日志
+    console.log("Trip successfully created:", newTrip);
     res.status(201).json(newTrip);
   } catch (err) {
-    console.error("Error creating trip:", err); // 打印详细错误信息
+    console.error("Error creating trip:", err);
     res.status(500).json({ error: "Server error creating trip." });
   }
 };
