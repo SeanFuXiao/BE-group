@@ -3,69 +3,49 @@ const Bill = require("../models/BillModel");
 const User = require("../models/UserModel");
 
 // Create Trip
-// 创建 Trip 的控制器
 
 const mongoose = require("mongoose");
+const Trip = require("../models/Trip");
+const User = require("../models/User");
+const mongoose = require("mongoose");
 
-exports.createTrip = async (req, res) => {
+const createTrip = async (req, res) => {
   try {
     const { name, start_date, end_date, participants } = req.body;
 
-    if (
-      !name ||
-      !start_date ||
-      !end_date ||
-      !participants ||
-      participants.length === 0
-    ) {
-      return res
-        .status(400)
-        .json({
-          error: "All fields are required, and participants cannot be empty.",
-        });
+    console.log("Request Body:", req.body); // 打印请求内容，方便调试
+
+    // 验证必填字段
+    if (!name || !start_date || !end_date) {
+      return res.status(400).json({ error: "All fields are required." });
     }
 
-    if (new Date(start_date) > new Date(end_date)) {
-      return res
-        .status(400)
-        .json({ error: "Start date cannot be later than end date." });
-    }
-
-    const participantIds = participants.map((id) =>
-      mongoose.Types.ObjectId(id)
-    );
-    console.log("Converted Participant IDs:", participantIds);
-
-    const validParticipants = await User.find({ _id: { $in: participantIds } });
-    if (validParticipants.length !== participants.length) {
-      const invalidParticipants = participants.filter(
-        (id) => !validParticipants.some((user) => user._id.toString() === id)
+    // 如果有 participants，则验证格式；允许为空数组
+    let validParticipants = [];
+    if (participants && participants.length > 0) {
+      validParticipants = participants.filter((id) =>
+        mongoose.Types.ObjectId.isValid(id)
       );
-
-      console.log("Invalid Participant IDs:", invalidParticipants);
-
-      return res.status(400).json({
-        error: "One or more participants are invalid.",
-        invalidParticipants,
-      });
     }
 
-    const trip = new Trip({
+    // 创建 Trip
+    const newTrip = await Trip.create({
+      user_id: req.user._id, // 从 authMiddleware 设置的 req.user 获取
       name,
       start_date,
       end_date,
-      participants: participantIds,
+      participants: validParticipants, // 如果为空，则存储为空数组
     });
 
-    await trip.save();
-    res.status(201).json({ message: "Trip created successfully", trip });
-  } catch (error) {
-    console.error("Error creating trip:", error);
-    res.status(500).json({ error: "Server error creating trip" });
+    console.log("Trip successfully created:", newTrip); // 打印成功日志
+    res.status(201).json(newTrip);
+  } catch (err) {
+    console.error("Error creating trip:", err); // 打印详细错误信息
+    res.status(500).json({ error: "Server error creating trip." });
   }
 };
 
-// Get All Trips
+module.exports = { createTrip };
 exports.getAllTrips = async (req, res) => {
   try {
     const trips = await Trip.find({ user_id: req.user.id })

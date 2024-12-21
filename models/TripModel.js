@@ -11,7 +11,7 @@ const TripSchema = new mongoose.Schema({
   end_date: { type: Date, required: true },
   total_cost: { type: Number, default: 0 },
   participants: [
-    { type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] },
+    { type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }, // 默认值为空数组
   ],
 });
 
