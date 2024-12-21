@@ -3,37 +3,65 @@ const Bill = require("../models/BillModel");
 const User = require("../models/UserModel");
 
 // Create Trip
+// 创建 Trip 的控制器
+
+const mongoose = require("mongoose");
+
 exports.createTrip = async (req, res) => {
   try {
     const { name, start_date, end_date, participants } = req.body;
 
-    if (!name || !start_date || !end_date) {
-      return res.status(400).json({ error: "Required fields are missing" });
+    if (
+      !name ||
+      !start_date ||
+      !end_date ||
+      !participants ||
+      participants.length === 0
+    ) {
+      return res
+        .status(400)
+        .json({
+          error: "All fields are required, and participants cannot be empty.",
+        });
     }
 
-    const participantsObjectIds = await Promise.all(
-      participants.map(async (username) => {
-        const user = await User.findOne({ username });
-        if (!user) throw new Error(`User not found: ${username}`);
-        return user._id;
-      })
+    if (new Date(start_date) > new Date(end_date)) {
+      return res
+        .status(400)
+        .json({ error: "Start date cannot be later than end date." });
+    }
+
+    const participantIds = participants.map((id) =>
+      mongoose.Types.ObjectId(id)
     );
+    console.log("Converted Participant IDs:", participantIds);
+
+    const validParticipants = await User.find({ _id: { $in: participantIds } });
+    if (validParticipants.length !== participants.length) {
+      const invalidParticipants = participants.filter(
+        (id) => !validParticipants.some((user) => user._id.toString() === id)
+      );
+
+      console.log("Invalid Participant IDs:", invalidParticipants);
+
+      return res.status(400).json({
+        error: "One or more participants are invalid.",
+        invalidParticipants,
+      });
+    }
 
     const trip = new Trip({
-      user_id: req.user.id,
       name,
       start_date,
       end_date,
-      participants,
+      participants: participantIds,
     });
 
--
     await trip.save();
-    res.status(201).json({ message: "Trip created", trip });
-  } catch (err) {
-    console.error(err.message);
+    res.status(201).json({ message: "Trip created successfully", trip });
+  } catch (error) {
+    console.error("Error creating trip:", error);
     res.status(500).json({ error: "Server error creating trip" });
-
   }
 };
 
@@ -89,7 +117,6 @@ exports.getTripDetails = async (req, res) => {
       balance: participant.amount_paid - participant.amount_owed,
     }));
 
-   
     const billsWithPayer = await Promise.all(
       bills.map(async (bill) => {
         const payer = await User.findById(bill.payer_id);
@@ -112,7 +139,7 @@ exports.getTripDetails = async (req, res) => {
         id: p._id,
         username: p.username,
       })),
-      bills: billsWithPayer, 
+      bills: billsWithPayer,
       balances,
     });
   } catch (err) {
@@ -145,15 +172,12 @@ exports.deleteTrip = async (req, res) => {
   try {
     const tripId = req.params.id;
 
-
     await Bill.deleteMany({ trip_id: trip._id });
     await Participant.deleteMany({ trip_id: trip._id });
 
     await trip.deleteOne();
 
-    res
-      
-      .json({ message: "Trip and related participants deleted successfully" });
+    res.json({ message: "Trip and related participants deleted successfully" });
   } catch (error) {
     console.error("Error deleting trip:", error);
     res.status(500).json({ error: error.message });

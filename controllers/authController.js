@@ -102,22 +102,31 @@ exports.deleteUser = async (req, res) => {
 };
 
 // Check Username Exists
+// Check Username Exists
 exports.checkUsernameExists = async (req, res) => {
   try {
     const { username } = req.params;
 
+    // 验证是否提供了用户名
     if (!username) {
       return res.status(400).json({ error: "Username is required" });
     }
 
+    // 查询数据库
     const user = await User.findOne({ username });
 
     if (user) {
-      return res.status(200).json({ id: user._id, username: user.username });
+      // 如果找到用户，返回 id 和 username
+      return res.status(200).json({
+        id: user._id,
+        username: user.username,
+      });
     } else {
+      // 如果未找到用户
       return res.status(404).json({ error: "User not found" });
     }
   } catch (err) {
+    // 捕获服务器错误
     res.status(500).json({ error: "Server error checking username" });
   }
 };

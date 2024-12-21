@@ -4,7 +4,6 @@ const BillSchema = new mongoose.Schema({
   trip_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Trip",
-    required: true,
   },
   payer_id: {
     type: mongoose.Schema.Types.ObjectId,
