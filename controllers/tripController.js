@@ -39,8 +39,7 @@ const createTrip = async (req, res) => {
   }
 };
 
-module.exports = { createTrip };
-exports.getAllTrips = async (req, res) => {
+const getAllTrips = async (req, res) => {
   try {
     const trips = await Trip.find({ user_id: req.user.id })
       .populate("user_id", "username")
@@ -67,7 +66,7 @@ exports.getAllTrips = async (req, res) => {
 };
 
 // Get Trip Details
-exports.getTripDetails = async (req, res) => {
+const getTripDetails = async (req, res) => {
   try {
     const trip = await Trip.findById(req.params.id)
       .populate("user_id", "username")
@@ -124,7 +123,7 @@ exports.getTripDetails = async (req, res) => {
 // Update
 // Update
 
-exports.updateTrip = async (req, res) => {
+const updateTrip = async (req, res) => {
   try {
     const { name, start_date, end_date } = req.body;
 
@@ -142,7 +141,7 @@ exports.updateTrip = async (req, res) => {
 };
 
 // Delete Trip
-exports.deleteTrip = async (req, res) => {
+const deleteTrip = async (req, res) => {
   try {
     const tripId = req.params.id;
 
@@ -200,3 +199,10 @@ exports.deleteTrip = async (req, res) => {
 //     res.status(500).json({ error: err.message });
 //   }
 // };
+module.exports = {
+  getAllTrips,
+  createTrip,
+  getTripDetails,
+  updateTrip,
+  deleteTrip,
+};
