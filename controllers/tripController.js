@@ -5,9 +5,6 @@ const User = require("../models/UserModel");
 // Create Trip
 
 const mongoose = require("mongoose");
-const Trip = require("../models/Trip");
-const User = require("../models/User");
-const mongoose = require("mongoose");
 
 const createTrip = async (req, res) => {
   try {
